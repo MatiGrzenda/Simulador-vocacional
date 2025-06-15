@@ -7,7 +7,7 @@ import readline from "readline";
 // Baja ollama  de https://ollama.com/ 
 // corre el siguiente comando en la terminal: `ollama run gemma3:1b`
 const ollamaLLM = new Ollama({
-  model: "gemma3:1b", // Cambia el modelo si lo deseas por ejemplo : "mistral:7b", "llama2:7b", etc.
+  model: "gemma3:4b", // Cambia el modelo si lo deseas por ejemplo : "mistral:7b", "llama2:7b", etc.
   temperature: 0.75,
 });
 
@@ -23,6 +23,13 @@ async function main() {
     output: process.stdout,
   });
 
+  let history = [
+    {
+      role: "system",
+      content: "Eres un agente virtual cuyo propósito es ayudar a la gente a definir su trayectoria educativa o laboral. Debes hacer al menos 3 preguntas abiertas sobre gustos, intereses y preferencias personales, para luego sugerir al menos 2 posibilidades de estudios en base a los datos del usuario. No hagas más preguntas que las necesarias para hacer recomendaciones de carreras. Tienes que mantener un tono amable y claro en todo momento."
+    },
+  ]
+
   console.log("🤖 Bot con IA (Ollama) iniciado.");
   console.log("Escribí tu pregunta o poné 'salir' para terminar:");
 
@@ -33,20 +40,15 @@ async function main() {
       return;
     }
 
+    // Guardamos la pregunta del usuario
+    history.push({ role: "user", content: input });
+
     try {
-      // Enviamos la pregunta al modelo de IA usando Ollama
-      const res = await ollamaLLM.chat({
-        messages: [
-          {
-            role: "system",
-            content:"Eres un agente virtual que ayuda a los alumnos a resolver sus dudas sobre la materia de Programación 1. Responde a las preguntas como si fueras un profesor, utiliza ejemplos y explicaciones claras. No uses mas de 20 palabras"
-          },
-          {
-            role: "user",
-            content: input, // Lo que escribió el usuario
-          },
-        ],
-      });
+      // Enviamos la conversación al modelo de IA usando Ollama
+      const res = await ollamaLLM.chat({ messages: history });
+
+      // Guardamos la respuesta del LLM
+      history.push(res.message);
 
       // Obtenemos el texto de la respuesta
       const respuesta = res?.message?.content || res?.message || "";
